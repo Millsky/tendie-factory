@@ -18,14 +18,13 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 1. Pull all the stock tickers and convert to a vec
     let tickers = get_tickers()?;
+    // 2. Download and parse the reddit WSB data
     let posts = get_wsb_top().await?;
     let v: serde_json::Value = serde_json::from_str(&posts)?;
     println!("{}", v["data"]["children"][0]["data"]["title"]);
-    // 1. Download all the stock tickers
-    // 2. Convert the stock tickers into a vector
-    // 3. Download the reddit WSB data
-    // 4. For each post / comment search for an occurnce of the stock tickers
-    // 5. Create a ranking of each asset based on coverage in the Forum
+    // 3. Determine the weight of each of the posts talking about a given ticker
+    // 4. Construct a portfolio fo stocks based on this initial weighting
     Ok(())
 }
