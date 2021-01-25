@@ -40,10 +40,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Pull all the stock tickers and convert to a vec
     let tickers = get_tickers_nasdaq()?;
     // 2. Download and parse the reddit WSB data
-    let posts = get_wsb_top().await?;
-    let v: RedditContainer<RedditListing> = serde_json::from_str(&posts)?;
+    let posts: RedditContainer<RedditListing> = serde_json::from_str(
+        &get_wsb_top().await?
+    )?;
     // 3. Calculate the number of occurrences of each ticker in each title
-    let m: Vec<HashSet<&String>> = v.data.children.into_iter().map(|x| {
+    let tickers_in_each_title: Vec<HashSet<&String>> = posts.data.children.into_iter().map(|x| {
         x.data.title
     }).map(| x | {
         let mut tickers_in_title = HashSet::new();
@@ -59,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         return tickers_in_title;
     }).collect();
-    println!("{:?}", m);
+    println!("{:?}", tickers_in_each_title);
     // 3. Determine the weight of each of the posts talking about a given ticker
     // 4. Construct a portfolio fo stocks based on this initial weighting
     Ok(())
