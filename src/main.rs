@@ -48,6 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         x.data.title
     }).map(| x | {
         let mut tickers_in_title = HashSet::new();
+        println!("{}", x);
         for ticker in &tickers {
             match twoway::find_str(&x, &format!(" {} ", ticker)) {
                 None => {
