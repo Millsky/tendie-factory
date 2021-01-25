@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 None => {
 
                 }
-                Some(t) => {
+                Some(_t) => {
                     tickers_in_title.insert(ticker);
                 }
             }
