@@ -32,7 +32,7 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
-    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?count=25&t=week")
+    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?count=25&t=day")
     .await?
     .text()
     .await?;
@@ -88,8 +88,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     // 3. Calculate the number of occurrences of each ticker in each title
     let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
-    println!("{:?}", ticker_metrics);
-    // 3. TODO: Determine the weight of each of the posts talking about a given ticker
-    // 4. TODO: Construct a portfolio of stocks based on this initial weighting
+    // 3. Determine the weight of each of the posts talking about a given ticker
+    // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
+    let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
+    let total_mentions = ticker_metrics.values().into_iter().fold(0, |acc, w| { acc + w});
+    for (k, v) in ticker_metrics.into_iter() {
+        portfolio_weights.insert(k, (v as f64 / total_mentions as f64));
+    }
+    // 4. Construct a portfolio of stocks based on this initial weighting
+    println!("{:?}", portfolio_weights);
     Ok(())
 }
