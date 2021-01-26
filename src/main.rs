@@ -40,7 +40,7 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
 }
 
 fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
-    let tickers_in_each_title: Vec<HashSet<&String>> = posts.data.children.into_iter().map(|x| {
+    let tickers_in_each_title: Vec<HashSet<&String>> = posts.into_iter().map(|x| {
         x.data.title
     }).map(| x | {
         let mut tickers_in_title = HashSet::new();
