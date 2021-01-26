@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 struct RedditContainer<T> {
@@ -24,11 +25,14 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let record = result?;
         tickers.push(String::from(&record[0]));
     }
+    tickers.push(String::from("GME"));
+    tickers.push(String::from("BB"));
+    tickers.push(String::from("PLTR"));
     Ok(tickers)
 }
 
 async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
-    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?count=20")
+    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?count=25&t=week")
     .await?
     .text()
     .await?;
@@ -48,20 +52,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         x.data.title
     }).map(| x | {
         let mut tickers_in_title = HashSet::new();
-        println!("{}", x);
         for ticker in &tickers {
-            match twoway::find_str(&x, &format!(" {} ", ticker)) {
-                None => {
-
-                }
-                Some(_t) => {
+            // Found at start of line
+            match twoway::find_str(&x, &format!("{} ", ticker)) {
+                Some(_n) => {
                     tickers_in_title.insert(ticker);
-                }
+                },
+                None => {}
+            }
+            // Found at end of line
+            match twoway::find_str(&x, &format!(" {}", ticker)) {
+                Some(_n) => {
+                    tickers_in_title.insert(ticker);
+                },
+                None => {}
+            }
+            // Found in middle of line
+            match twoway::find_str(&x, &format!(" {} ", ticker)) {
+                Some(_n) => {
+                    tickers_in_title.insert(ticker);
+                },
+                None => {}
+            }
+            // Found in ticker
+            match twoway::find_str(&x, &format!("${}", ticker)) {
+                Some(_n) => {
+                    tickers_in_title.insert(ticker);
+                },
+                None => {}
             }
         }
         return tickers_in_title;
     }).collect();
-    println!("{:?}", tickers_in_each_title);
+
+    let mut ticker_metrics: HashMap<String, i32> = HashMap::new();
+    for ticker_matches in tickers_in_each_title {
+        for ticker in ticker_matches.into_iter() {
+            match ticker_metrics.contains_key(ticker) {
+                true => {
+                    ticker_metrics.insert(String::from(ticker), *ticker_metrics.get(ticker).unwrap() + 1);
+                },
+                false =>  {
+                    ticker_metrics.insert(String::from(ticker), 1);
+                }
+            }
+        }
+    }
+    println!("{:?}", ticker_metrics);
     // 3. Determine the weight of each of the posts talking about a given ticker
     // 4. Construct a portfolio fo stocks based on this initial weighting
     Ok(())
