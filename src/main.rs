@@ -32,7 +32,7 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
-    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?count=25&t=day")
+    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/new/.json?count=25&t=day")
     .await?
     .text()
     .await?;
