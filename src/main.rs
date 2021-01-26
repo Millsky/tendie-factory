@@ -104,7 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 3. Calculate the number of occurrences of each ticker in each title
     let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     println!("{:?}", ticker_metrics);
-    // 3. Determine the weight of each of the posts talking about a given ticker
-    // 4. Construct a portfolio fo stocks based on this initial weighting
+    // 3. TODO: Determine the weight of each of the posts talking about a given ticker
+    // 4. TODO: Construct a portfolio of stocks based on this initial weighting
     Ok(())
 }
