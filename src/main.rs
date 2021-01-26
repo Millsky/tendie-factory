@@ -39,15 +39,7 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
     Ok(body)
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. Pull all the stock tickers and convert to a vec
-    let tickers = get_tickers_nasdaq()?;
-    // 2. Download and parse the reddit WSB data
-    let posts: RedditContainer<RedditListing> = serde_json::from_str(
-        &get_wsb_top().await?
-    )?;
-    // 3. Calculate the number of occurrences of each ticker in each title
+fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
     let tickers_in_each_title: Vec<HashSet<&String>> = posts.data.children.into_iter().map(|x| {
         x.data.title
     }).map(| x | {
@@ -98,6 +90,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+    return ticker_metrics;
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 1. Pull all the stock tickers and convert to a vec
+    let tickers = get_tickers_nasdaq()?;
+    // 2. Download and parse the reddit WSB data
+    let posts: RedditContainer<RedditListing> = serde_json::from_str(
+        &get_wsb_top().await?
+    )?;
+    // 3. Calculate the number of occurrences of each ticker in each title
+    let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     println!("{:?}", ticker_metrics);
     // 3. Determine the weight of each of the posts talking about a given ticker
     // 4. Construct a portfolio fo stocks based on this initial weighting
