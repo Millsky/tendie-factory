@@ -40,57 +40,42 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
 }
 
 fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
-    let tickers_in_each_title: Vec<HashSet<&String>> = posts.into_iter().map(|x| {
-        x.data.title
-    }).map(| x | {
-        let mut tickers_in_title = HashSet::new();
-        for ticker in &tickers {
-            // Found at start of line
-            match twoway::find_str(&x, &format!("{} ", ticker)) {
-                Some(_n) => {
-                    tickers_in_title.insert(ticker);
-                },
-                None => {}
+    let tickers_in_each_title = posts.into_iter().map(|reddit_post| {
+        reddit_post.data.title.split(" ").map(|s| String::from(s)).collect()
+    }).map(| reddit_post_title_tokens: Vec<String> | {
+        reddit_post_title_tokens.into_iter().fold(HashSet::new(), |mut acc, title_token| {
+            if tickers.contains(&title_token) {
+                acc.insert(String::from(&title_token));
             }
-            // Found at end of line
-            match twoway::find_str(&x, &format!(" {}", ticker)) {
-                Some(_n) => {
-                    tickers_in_title.insert(ticker);
+            // handle Cash Tagged Assets: EX: $GME
+            let first_char = title_token.chars().nth(0).unwrap();
+            match first_char {
+                '$' => {
+                    let cash_tagged_ticker: Vec<String> = title_token.split("$").map(|s| String::from(s)).collect();
+                    if tickers.contains(&String::from(&cash_tagged_ticker[1])) {
+                        acc.insert((*String::from(&cash_tagged_ticker[1])).parse().unwrap());
+                    }
                 },
-                None => {}
+                _ => {},
             }
-            // Found in middle of line
-            match twoway::find_str(&x, &format!(" {} ", ticker)) {
-                Some(_n) => {
-                    tickers_in_title.insert(ticker);
-                },
-                None => {}
-            }
-            // Found in ticker
-            match twoway::find_str(&x, &format!("${}", ticker)) {
-                Some(_n) => {
-                    tickers_in_title.insert(ticker);
-                },
-                None => {}
-            }
-        }
-        return tickers_in_title;
-    }).collect();
+            acc
+        })
+    });
 
     let mut ticker_metrics: HashMap<String, i32> = HashMap::new();
     for ticker_matches in tickers_in_each_title {
         for ticker in ticker_matches.into_iter() {
-            match ticker_metrics.contains_key(ticker) {
+            match ticker_metrics.contains_key(&ticker) {
                 true => {
-                    ticker_metrics.insert(String::from(ticker), *ticker_metrics.get(ticker).unwrap() + 1);
+                    ticker_metrics.insert(String::from(&ticker), *ticker_metrics.get(&ticker).unwrap() + 1);
                 },
                 false =>  {
-                    ticker_metrics.insert(String::from(ticker), 1);
+                    ticker_metrics.insert(String::from(&ticker), 1);
                 }
             }
         }
     }
-    return ticker_metrics;
+    ticker_metrics
 }
 
 #[tokio::main]
