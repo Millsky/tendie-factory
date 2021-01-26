@@ -78,6 +78,16 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
     ticker_metrics
 }
 
+fn calculate_portfolio_weights_simple(ticker_metrics: HashMap<String, i32>) -> HashMap<String, f64> {
+    // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
+    let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
+    let total_mentions = ticker_metrics.values().into_iter().fold(0, |acc, w| { acc + w});
+    for (k, v) in ticker_metrics.into_iter() {
+        portfolio_weights.insert(k, (v as f64 / total_mentions as f64));
+    }
+    portfolio_weights
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Pull all the stock tickers and convert to a vec
@@ -89,12 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 3. Calculate the number of occurrences of each ticker in each title
     let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     // 3. Determine the weight of each of the posts talking about a given ticker
-    // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
-    let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
-    let total_mentions = ticker_metrics.values().into_iter().fold(0, |acc, w| { acc + w});
-    for (k, v) in ticker_metrics.into_iter() {
-        portfolio_weights.insert(k, (v as f64 / total_mentions as f64));
-    }
+    let portfolio_weights = calculate_portfolio_weights_simple(ticker_metrics);
     // 4. Construct a portfolio of stocks based on this initial weighting
     println!("{:?}", portfolio_weights);
     Ok(())
