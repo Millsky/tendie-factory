@@ -83,7 +83,7 @@ fn calculate_portfolio_weights_simple(ticker_metrics: HashMap<String, i32>) -> H
     let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
     let total_mentions = ticker_metrics.values().into_iter().fold(0, |acc, w| { acc + w});
     for (k, v) in ticker_metrics.into_iter() {
-        portfolio_weights.insert(k, (v as f64 / total_mentions as f64));
+        portfolio_weights.insert(k, v as f64 / total_mentions as f64);
     }
     portfolio_weights
 }
