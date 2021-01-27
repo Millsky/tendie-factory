@@ -32,7 +32,7 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
-    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?limit=100&t=month")
+    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/new/.json?limit=100&t=day")
     .await?
     .text()
     .await?;
@@ -49,14 +49,11 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
             }
             // handle Cash Tagged Assets: EX: $GME
             let first_char = title_token.chars().nth(0).unwrap();
-            match first_char {
-                '$' => {
-                    let cash_tagged_ticker: Vec<String> = title_token.split("$").map(|s| String::from(s)).collect();
-                    if tickers.contains(&String::from(&cash_tagged_ticker[1])) {
-                        acc.insert((*String::from(&cash_tagged_ticker[1])).parse().unwrap());
-                    }
-                },
-                _ => {},
+            if first_char == '$' {
+                let cash_tagged_ticker: Vec<String> = title_token.split("$").map(|s| String::from(s)).collect();
+                if tickers.contains(&String::from(&cash_tagged_ticker[1])) {
+                    acc.insert((*String::from(&cash_tagged_ticker[1])).parse().unwrap());
+                }
             }
             acc
         })
