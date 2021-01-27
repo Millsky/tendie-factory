@@ -25,9 +25,6 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let record = result?;
         tickers.push(String::from(&record[0]));
     }
-    tickers.push(String::from("GME"));
-    tickers.push(String::from("BB"));
-    tickers.push(String::from("PLTR"));
     Ok(tickers)
 }
 
@@ -40,24 +37,24 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
 }
 
 fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
-    let tickers_in_each_title = posts.into_iter().map(|reddit_post| {
-        reddit_post.data.title.split(" ").map(|s| String::from(s)).collect()
-    }).map(| reddit_post_title_tokens: Vec<String> | {
-        reddit_post_title_tokens.into_iter().fold(HashSet::new(), |mut acc, title_token| {
-            if tickers.contains(&title_token) {
-                acc.insert(String::from(&title_token));
+    let mut tickers_in_each_title: Vec<HashSet<String>> = vec![];
+    for post in posts.into_iter() {
+        let mut tickers_in_title: HashSet<String> = HashSet::new();
+        for token in post.data.title.split(" ").map(String::from) {
+            let first_char = token.chars().nth(0).unwrap();
+            if tickers.contains(&token) {
+                tickers_in_title.insert(String::from(&token));
             }
-            // handle Cash Tagged Assets: EX: $GME
-            let first_char = title_token.chars().nth(0).unwrap();
+            // Handle Cash Tagged Assets ex: $GME
             if first_char == '$' {
-                let cash_tagged_ticker: Vec<String> = title_token.split("$").map(|s| String::from(s)).collect();
-                if tickers.contains(&String::from(&cash_tagged_ticker[1])) {
-                    acc.insert((*String::from(&cash_tagged_ticker[1])).parse().unwrap());
+                let cash_tagged_ticker: Vec<String> = token.split("$").map(|s| String::from(s)).collect();
+                if tickers.contains(&cash_tagged_ticker[1]) {
+                    tickers_in_title.insert(String::from(&cash_tagged_ticker[1]));
                 }
             }
-            acc
-        })
-    });
+        }
+        tickers_in_each_title.push(tickers_in_title);
+    }
 
     let mut ticker_metrics: HashMap<String, i32> = HashMap::new();
     for ticker_matches in tickers_in_each_title {
