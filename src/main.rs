@@ -96,5 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let portfolio_weights = calculate_portfolio_weights_simple(ticker_metrics);
     // 4. Construct a portfolio of stocks based on this initial weighting
     println!("{:?}", portfolio_weights);
+    // 5. TODO: use a token classifier: https://huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english to pull out suspected stocks when a normal token is found
+    // Use https://docs.rs/rust-bert/0.12.1/rust_bert/ OR https://crates.io/crates/rust_tokenizers to perform token classification
     Ok(())
 }
