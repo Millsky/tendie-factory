@@ -90,7 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let posts: RedditContainer<RedditListing> = serde_json::from_str(
         &get_wsb_top().await?
     )?;
-    // 3. Calculate the number of occurrences of each ticker in each title
+    // 3. Naive Calculation: Compute the number of occurrences of each ticker in each title
     let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     // 3. Determine the weight of each of the posts talking about a given ticker
     let portfolio_weights = calculate_portfolio_weights_simple(ticker_metrics);

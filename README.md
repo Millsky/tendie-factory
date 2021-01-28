@@ -16,7 +16,7 @@ Tendie-Factory is a work in progress application that seeks to track the stocks 
 Currently, the following algorithm is followed:
 
 1. Pull the data from WSB top posts over the past day
-2. Parse out the tickers that are valid
+2. Naively parse out the tickers that are valid, TODO: Switch this to a tokenization approach
 3. For tickers that are mentioned, construct a portfolio of stock weights with `(Mentions / Total Mentions)`.
 The program will output a JSON object with the tickers and respective weights, for example:
 ```json
