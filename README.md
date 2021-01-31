@@ -4,6 +4,13 @@
 
 Tendie-Factory is a work in progress application that seeks to track the stocks mentioned in the `wallstreetbets` subreddit.
 
+## Quickstart
+
+To run this program:
+
+1. Install [Rust](https://www.rust-lang.org/tools/install)
+2. From the `tendie-factory/core` directory run: `cargo run`.
+
 ## Goals of the project
 
 1. Create a portfolio of stocks based on the past 24 hours of data derived from `wallstreetbets`.

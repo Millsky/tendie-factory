@@ -38,6 +38,7 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
     Ok(body)
 }
 
+// Calculates the number of mentions for each ticker
 fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
     let mut tickers_in_each_title: Vec<HashSet<String>> = vec![];
     for post in posts.into_iter() {
@@ -75,6 +76,7 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
     ticker_metrics
 }
 
+// Calculates an optimal portfolio weight using the naive metric of (mentions of ticker / total posts that mention a ticker)
 fn calculate_portfolio_weights_simple(ticker_metrics: HashMap<String, i32>) -> HashMap<String, f64> {
     // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
     let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
