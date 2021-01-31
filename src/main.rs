@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::collections::HashMap;
 
+mod nlp;
+
 #[derive(Serialize, Deserialize)]
 struct RedditContainer<T> {
     kind: String,
@@ -19,7 +21,7 @@ struct RedditListing {
 }
 
 fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let mut rdr = csv::Reader::from_path("./src/companylist.csv")?;
+    let mut rdr = csv::Reader::from_path("./src/nasdaq_screener.csv")?;
     let mut tickers: Vec<String> = vec![];
     for result in rdr.records() {
         let record = result?;
@@ -29,7 +31,7 @@ fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
-    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?limit=100&t=day")
+    let body = reqwest::get("https://www.reddit.com/r/wallstreetbets/top/.json?limit=100&t=month")
     .await?
     .text()
     .await?;
@@ -40,9 +42,10 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
     let mut tickers_in_each_title: Vec<HashSet<String>> = vec![];
     for post in posts.into_iter() {
         let mut tickers_in_title: HashSet<String> = HashSet::new();
+        let possible_companies = nlp::bert_organization_tokenization(post.data.title.as_str());
         for token in post.data.title.split(" ").map(String::from) {
             let first_char = token.chars().nth(0).unwrap();
-            if tickers.contains(&token) {
+            if tickers.contains(&token) && possible_companies.contains(&token) {
                 tickers_in_title.insert(String::from(&token));
             }
             // Handle Cash Tagged Assets ex: $GME
@@ -90,13 +93,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let posts: RedditContainer<RedditListing> = serde_json::from_str(
         &get_wsb_top().await?
     )?;
-    // 3. Naive Calculation: Compute the number of occurrences of each ticker in each title
+    // 3. Compute the number of occurrences of each ticker in each title
     let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     // 3. Determine the weight of each of the posts talking about a given ticker
     let portfolio_weights = calculate_portfolio_weights_simple(ticker_metrics);
     // 4. Construct a portfolio of stocks based on this initial weighting
     println!("{:?}", portfolio_weights);
-    // 5. TODO: use a token classifier: https://huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english to pull out suspected stocks when a normal token is found
-    // Use https://docs.rs/rust-bert/0.12.1/rust_bert/ OR https://crates.io/crates/rust_tokenizers to perform token classification
     Ok(())
 }

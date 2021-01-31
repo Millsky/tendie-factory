@@ -15,10 +15,25 @@ Tendie-Factory is a work in progress application that seeks to track the stocks 
 
 Currently, the following algorithm is followed:
 
-1. Pull the data from WSB top posts over the past day
-2. Naively parse out the tickers that are valid, TODO: Switch this to a tokenization approach
+1. Pull the data from WSB top posts over the past day.
+2. Use the Named Entity Recognition Model and Actively traded ticker symbols to parse out valid tickers.
 3. For tickers that are mentioned, construct a portfolio of stock weights with `(Mentions / Total Mentions)`.
 The program will output a JSON object with the tickers and respective weights, for example:
+   
 ```json
 {"GME": 0.8181818181818182, "BB": 0.18181818181818182}
+```
+
+## Citations
+
+```bibtex
+@inproceedings{becquin-2020-end,
+    title = "End-to-end {NLP} Pipelines in Rust",
+    author = "Becquin, Guillaume",
+    booktitle = "Proceedings of Second Workshop for NLP Open Source Software (NLP-OSS)",
+    year = "2020",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2020.nlposs-1.4",
+    pages = "20--25",
+}
 ```
