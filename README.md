@@ -15,11 +15,11 @@ Tendie-Factory is a work in progress application that seeks to track the stocks 
 
 Currently, the following algorithm is followed:
 
-1. Pull the data from WSB top posts over the past day.
-2. Use the Named Entity Recognition Model and Actively traded ticker symbols to parse out valid tickers.
+1. Pull the data from [WSB](https://www.reddit.com/r/wallstreetbets) top posts over the past day.
+2. Use the [Named Entity Recognition Model](https://en.wikipedia.org/wiki/Named-entity_recognition) and Actively traded ticker symbols to parse out valid tickers.
 3. For tickers that are mentioned, construct a portfolio of stock weights with `(Mentions / Total Mentions)`.
 The program will output a JSON object with the tickers and respective weights, for example:
-   
+
 ```json
 {"GME": 0.8181818181818182, "BB": 0.18181818181818182}
 ```
