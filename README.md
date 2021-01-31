@@ -24,6 +24,10 @@ The program will output a JSON object with the tickers and respective weights, f
 {"GME": 0.8181818181818182, "BB": 0.18181818181818182}
 ```
 
+### Flow Diagram
+
+![Diagram of Flow](./docs/tendie-factory.png)
+
 ## Citations
 
 ```bibtex
