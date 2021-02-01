@@ -1764,6 +1764,7 @@ name = "tendie-factory"
 version = "0.1.0"
 dependencies = [
  "csv",
+ "rayon",
  "reqwest 0.11.0",
  "rust-bert",
  "serde",

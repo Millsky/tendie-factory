@@ -87,9 +87,11 @@ async fn get_wsb_top() -> Result<String, Box<dyn std::error::Error>> {
 // Calculates the number of mentions for each ticker
 fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec<String>) -> HashMap<String, i32> {
     let mut tickers_in_each_title: Vec<HashSet<String>> = vec![];
-    for post in posts.into_iter() {
+    let titles: Vec<String> = posts.iter().map(|p| String::from(p.data.title.clone())).collect();
+    let possible_companies_list = nlp::bert_organization_tokenization(&titles);
+    for (i, post) in posts.iter().enumerate() {
         let mut tickers_in_title: HashSet<String> = HashSet::new();
-        let possible_companies = nlp::bert_organization_tokenization(post.data.title.as_str());
+        let possible_companies = &possible_companies_list[i];
         for token in post.data.title.split(" ").map(String::from) {
             let first_char = token.chars().nth(0).unwrap();
             if tickers.contains(&token) && possible_companies.contains(&token) {
