@@ -89,6 +89,7 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
     let mut tickers_in_each_title: Vec<HashSet<String>> = vec![];
     let titles: Vec<String> = posts.iter().map(|p| String::from(p.data.title.clone())).collect();
     let possible_companies_list = nlp::bert_organization_tokenization(&titles);
+
     for (i, post) in posts.iter().enumerate() {
         let mut tickers_in_title: HashSet<String> = HashSet::new();
         let possible_companies = &possible_companies_list[i];
@@ -113,10 +114,11 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
         for ticker in ticker_matches.into_iter() {
             match ticker_metrics.contains_key(&ticker) {
                 true => {
-                    ticker_metrics.insert(String::from(&ticker), *ticker_metrics.get(&ticker).unwrap() + 1);
+                    let v = *ticker_metrics.get(&ticker).unwrap() + 1;
+                    ticker_metrics.insert(ticker, v);
                 },
                 false =>  {
-                    ticker_metrics.insert(String::from(&ticker), 1);
+                    ticker_metrics.insert(ticker, 1);
                 }
             }
         }
@@ -128,8 +130,8 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
 fn calculate_portfolio_weights_simple(ticker_metrics: HashMap<String, i32>) -> HashMap<String, f64> {
     // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
     let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
-    let total_mentions = ticker_metrics.values().into_iter().fold(0, |acc, w| { acc + w});
-    for (k, v) in ticker_metrics.into_iter() {
+    let total_mentions = ticker_metrics.values().fold(0, |acc, w| { acc + w});
+    for (k, v) in ticker_metrics {
         portfolio_weights.insert(k, v as f64 / total_mentions as f64);
     }
     portfolio_weights
