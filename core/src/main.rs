@@ -163,6 +163,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 4. Construct a portfolio of stocks based on this initial weighting
     let portfolio = create_portfolio(portfolio_weights);
     let json_portfolio = serde_json::to_string(&portfolio)?;
+    println!("{:?}", json_portfolio);
     let mut file = File::create("portfolio.json")?;
     file.write_all(json_portfolio.as_bytes())?;
     Ok(())
