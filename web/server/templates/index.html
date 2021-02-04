@@ -1,9 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <link rel="stylesheet" href="./styles.prod.css" />
+        <title>Tendie Factory</title>
+    </head>
     <body>
-        <h1> Tendie Factory </h1>
         <div class="container">
-            {% include "stock-card.html" %}
+            <div class="">
+                <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
+                    <table class="min-w-full leading-normal">
+                        <thead>
+                        <tr>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Symbol
+                            </th>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Company Name
+                            </th>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Computed Portfolio Allocation
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% include "stock-card.html" %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </body>
 </html>
