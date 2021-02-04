@@ -1,6 +1,8 @@
 use askama::Template;
 use std::fs;
-use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::Write;
+use serde::{Deserialize};
 
 #[derive(Deserialize)]
 struct TickerData<'a> {
@@ -60,6 +62,7 @@ fn renders_the_passed_in_ticker() {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let contents: String = fs::read_to_string("./portfolio.json")?;
     let portfolio: Vec<PortfolioItem> = serde_json::from_str(contents.as_str())?;
-    println!("{}", render_portfolio(portfolio));
+    let mut file = File::create("index.html")?;
+    file.write_all(render_portfolio(portfolio).as_bytes())?;
     Ok(())
 }
