@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use rust_bert::pipelines::sentiment::SentimentPolarity;
+use std::collections::hash_map::RandomState;
 
 mod nlp;
 
@@ -55,21 +56,23 @@ struct PortfolioItem {
     portfolio_weight: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 struct TickerMetrics {
     occurrences: i32,
     ticker: String,
     titles_with_ticker: Vec<String>,
-    sentiment: Vec<SentimentPolarity>,
+    sentiment: f64,
+    portfolio_weight: f64,
 }
 
 impl TickerMetrics {
-    fn new(title: String) -> Self {
+    fn new(title: String, ticker: String) -> Self {
         TickerMetrics {
             occurrences: 1,
-            ticker: "".to_string(),
+            ticker,
             titles_with_ticker: vec![title],
-            sentiment: vec![],
+            sentiment: 0.0,
+            portfolio_weight: 0.0,
         }
     }
 
@@ -81,12 +84,28 @@ impl TickerMetrics {
         self.titles_with_ticker.push(title);
     }
 
+    fn set_portfolio_weight(&mut self, weight: f64) {
+        self.portfolio_weight = weight;
+    }
+
     fn calculate_sentiment(&mut self) {
-        for s  in nlp::sentiment_classifier(&self.titles_with_ticker) {
-            self.sentiment.push(s);
+        let mut sentiment = 0.0;
+        let sentiments = nlp::sentiment_classifier(&self.titles_with_ticker);
+        for s  in &sentiments {
+            match s {
+                SentimentPolarity::Negative => {
+                    sentiment -= 1.0;
+                }
+                SentimentPolarity::Positive => {
+                    sentiment += 1.0;
+                }
+            }
         }
+        self.sentiment = (sentiment / sentiments.len() as f64);
     }
 }
+
+
 
 fn get_tickers_nasdaq() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let mut rdr = csv::Reader::from_path("./src/nasdaq_screener.csv")?;
@@ -126,7 +145,6 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
     let possible_companies_list = nlp::bert_organization_tokenization(&titles);
 
     for (i, post) in posts.iter().enumerate() {
-        // let mut tickers_in_title: HashSet<String> = HashSet::new();
         let possible_companies = &possible_companies_list[i];
         for token in post.data.title.split(" ").map(String::from) {
             let first_char = token.chars().nth(0).unwrap();
@@ -140,12 +158,11 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
                 }
             }
             if ticker_metrics.contains_key(current_ticker.as_str()) {
-                // Has the key so get and add
                 let ticker_metric = ticker_metrics.get_mut(current_ticker.as_str()).unwrap();
                 ticker_metric.increment_occurrences();
                 ticker_metric.add_title(String::from(&post.data.title));
             } else if current_ticker != "" {
-                let ticker_metric = TickerMetrics::new(String::from(&post.data.title));
+                let ticker_metric = TickerMetrics::new(String::from(&post.data.title), String::from(&current_ticker));
                 ticker_metrics.insert(current_ticker, ticker_metric);
             }
         }
@@ -159,14 +176,13 @@ fn get_metrics_for_tickers(posts: Vec<RedditContainer<RedditPost>>, tickers: Vec
 }
 
 // Calculates an optimal portfolio weight using the naive metric of (mentions of ticker / total posts that mention a ticker)
-fn calculate_portfolio_weights_simple(ticker_metrics: &HashMap<String, TickerMetrics>) -> HashMap<String, f64> {
+fn calculate_portfolio_weights_simple(ticker_metrics: &mut HashMap<String, TickerMetrics>) -> &mut HashMap<String, TickerMetrics, RandomState> {
     // For now we are assuming the sentiment of each ticker is positive, since STONKS ONLY GO UP
-    let mut portfolio_weights: HashMap<String, f64> = HashMap::new();
     let total_mentions = ticker_metrics.values().fold(0, |acc, w| { acc + w.occurrences });
-    for (k, v) in ticker_metrics {
-        portfolio_weights.insert(String::from(k), v.occurrences as f64 / total_mentions as f64);
+    for metric in ticker_metrics.values_mut() {
+        metric.set_portfolio_weight(metric.occurrences as f64 / total_mentions as f64);
     }
-    portfolio_weights
+    ticker_metrics
 }
 
 fn create_portfolio(ticker_metrics: HashMap<String, f64>) -> Vec<PortfolioItem> {
@@ -189,14 +205,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &get_wsb_top().await?
     )?;
     // 3. Compute the number of occurrences of each ticker in each title
-    let ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
+    let mut ticker_metrics = get_metrics_for_tickers(posts.data.children, tickers);
     // 3. Determine the weight of each of the posts talking about a given ticker
-    let portfolio_weights = calculate_portfolio_weights_simple(&ticker_metrics);
+    let portfolio_weights = calculate_portfolio_weights_simple(&mut ticker_metrics);
+    println!("{:?}", portfolio_weights);
     // 4. Construct a portfolio of stocks based on this initial weighting
-    let portfolio = create_portfolio(portfolio_weights);
-    let json_portfolio = serde_json::to_string(&portfolio)?;
-    println!("{:?}", json_portfolio);
-    let mut file = File::create("portfolio.json")?;
-    file.write_all(json_portfolio.as_bytes())?;
+    // let portfolio = create_portfolio(portfolio_weights, &ticker_metrics);
+    // let json_portfolio = serde_json::to_string(&portfolio)?;
+    // println!("{:?}", json_portfolio);
+    // let mut file = File::create("portfolio.json")?;
+    // file.write_all(json_portfolio.as_bytes())?;
     Ok(())
 }
