@@ -1,0 +1,1 @@
+npx tailwindcss-cli@latest build  -o ../front_end/styles.prod.css
