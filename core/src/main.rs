@@ -54,6 +54,9 @@ struct TickerData {
 struct PortfolioItem {
     meta: TickerData,
     portfolio_weight: f64,
+    sentiment: f64,
+    titles_with_ticker: Vec<String>,
+    occurrences: i32,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -185,12 +188,16 @@ fn calculate_portfolio_weights_simple(ticker_metrics: &mut HashMap<String, Ticke
     ticker_metrics
 }
 
-fn create_portfolio(ticker_metrics: HashMap<String, f64>) -> Vec<PortfolioItem> {
+fn create_portfolio(ticker_metrics: &mut HashMap<String, TickerMetrics>) -> Vec<PortfolioItem> {
     let ticker_meta_data = pull_ticker_meta_data( ticker_metrics.keys().map(String::from).collect()).unwrap();
     ticker_meta_data.into_iter().map(| (key, meta) | {
+        let m = ticker_metrics.get(key.as_str()).unwrap().clone();
         let pi = PortfolioItem {
             meta,
-            portfolio_weight: ticker_metrics.get(key.as_str()).unwrap().clone(),
+            portfolio_weight: m.portfolio_weight,
+            occurrences: m.occurrences,
+            titles_with_ticker: m.titles_with_ticker.clone(),
+            sentiment: m.sentiment,
         };
         return pi;
     }).collect()
@@ -210,10 +217,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let portfolio_weights = calculate_portfolio_weights_simple(&mut ticker_metrics);
     println!("{:?}", portfolio_weights);
     // 4. Construct a portfolio of stocks based on this initial weighting
-    // let portfolio = create_portfolio(portfolio_weights, &ticker_metrics);
-    // let json_portfolio = serde_json::to_string(&portfolio)?;
-    // println!("{:?}", json_portfolio);
-    // let mut file = File::create("portfolio.json")?;
-    // file.write_all(json_portfolio.as_bytes())?;
+    let portfolio = create_portfolio(portfolio_weights);
+    let json_portfolio = serde_json::to_string(&portfolio)?;
+    println!("{:?}", json_portfolio);
+    let mut file = File::create("portfolio.json")?;
+    file.write_all(json_portfolio.as_bytes())?;
     Ok(())
 }
